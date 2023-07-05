@@ -33,6 +33,7 @@ model_ft.head = nn.Sequential(
     nn.Linear(in_features=512, out_features=256),
     nn.GELU(),
     nn.Linear(in_features=256, out_features=1),
+    nn.Sigmoid()
 )
 
 model_ft = model_ft.cuda()
