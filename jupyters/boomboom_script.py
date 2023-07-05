@@ -17,9 +17,11 @@ import random
 from tqdm import tqdm
 import timm
 import sys
-from msd_utils.image_utils.image_downloader3 import download_df_lis, download_one_image
 sys.path.append('../')
 sys.path.insert(0, "/efs/users/manjunathan/train_conv/")
+from msd_utils.image_utils.image_downloader3 import download_df_lis, download_one_image
+
+
 
 #Sizes of Input Images
 input_size = 256
