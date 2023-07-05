@@ -17,7 +17,9 @@ import random
 from tqdm import tqdm
 import timm
 import sys
+from msd_utils.image_utils.image_downloader3 import download_df_lis, download_one_image
 sys.path.append('../')
+sys.path.insert(0, "/efs/users/manjunathan/train_conv/")
 
 #Sizes of Input Images
 input_size = 256
@@ -68,24 +70,17 @@ preprocess = {
     ]),
 }
 
-# df_train = pd.read_csv('../dataset/train_data_v1-1.csv')
-# df_val = pd.read_csv('../dataset/val_data_v1-1.csv')
+csv_path = sys.argv[1]
 
+df = pd.read_csv(csv_path)
 
-# df_train['path'] = df_train['path'].apply(lambda x: os.path.join('dataset', x))
-# df_val['path'] = df_val['path'].apply(lambda x: os.path.join('dataset', x))
+df_lis = df.to_dict(orient="records")
+df_lis = download_df_lis(df_lis, "image_url")
+df=pd.DataFrame(df_lis)
+df['path'] = df['image_url_processed'].copy()
 
-train_csv_path = sys.argv[1]
-val_csv_path = sys.argv[2]
-
-df_train = pd.read_csv(train_csv_path)
-df_val = pd.read_csv(val_csv_path)
-
-# Modify the image paths in the CSV files based on the input directory
-input_directory = 'dataset'  # Modify this as per your directory structure
-df_train['path'] = df_train['path'].apply(lambda x: os.path.join(input_directory, x))
-df_val['path'] = df_val['path'].apply(lambda x: os.path.join(input_directory, x))
-
+df_train=df[df["status"]=="train"]
+df_val=df[df["status"]=="val"]
 
 
 from io import BytesIO
@@ -180,7 +175,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=80):
             plt.ylabel('Accuracy')
             plt.xlabel('Epoch')
             plt.legend(['train', 'valid'], loc='upper left')
-            plt.savefig(f'{epoch}.png')
+            plt.savefig('/efs/users/manjunathan/meli_data/boomboom_output' + str(epoch) + '.png')
             plt.close()
     
         print()
@@ -191,8 +186,8 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=80):
 
     return model, train_acc_history, val_acc_history
 
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = optim.AdamW(params=model_ft.parameters(), lr=0.2e-5)
+criterion = torch.nn.BCELoss()
+optimizer = optim.SGD(params=model_ft.parameters(), lr=0.001, weight_decay=0.0005, momentum=0.9)
 
 BATCH_SIZE = 64
 
@@ -205,6 +200,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 model_ft, train_acc_history, val_acc_history = train_model(
-    model_ft, dataloaders_dict, criterion, optimizer, num_epochs=3
+    model_ft, dataloaders_dict, criterion, optimizer, num_epochs=5
 )
+
 
