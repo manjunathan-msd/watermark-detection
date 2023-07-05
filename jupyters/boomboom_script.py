@@ -17,7 +17,7 @@ import random
 from tqdm import tqdm
 import timm
 import sys
-sys.path.append('../')
+#sys.path.append('../')
 sys.path.insert(0, "/efs/users/manjunathan/train_conv/")
 from msd_utils.image_utils.image_downloader3 import download_df_lis, download_one_image
 
@@ -93,6 +93,8 @@ class WatermarkDataset(torch.utils.data.Dataset):
     def __init__(self, df, transform):
         self.df = df.reset_index(drop = True)
         self.transform = transform
+        self.label_mapping = {'_NEGATIVE': 0, 'WATERMARK': 1}  # Mapping of string labels to numeric values
+
     
     def __len__(self):
         return len(self.df)
@@ -100,7 +102,9 @@ class WatermarkDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         img = Image.open(self.df.loc[idx].path).convert('RGB')
         tensor = self.transform(img)
-        return tensor, self.df.loc[idx].label
+        label = self.df.loc[idx].labels
+        numeric_label = self.label_mapping[label]
+        return tensor, numeric_label
 
 train_ds = WatermarkDataset(df_train, preprocess['train'])
 val_ds = WatermarkDataset(df_val, preprocess['val'])
