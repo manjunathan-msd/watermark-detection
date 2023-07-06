@@ -39,7 +39,7 @@ model_ft.head = nn.Sequential(
     nn.Linear(in_features=256, out_features=1),
     nn.Sigmoid()
 )
-
+print("Model has been Initialised",model_ft)
 model_ft = model_ft.cuda()
 
 #Preproc
@@ -83,6 +83,9 @@ df['path'] = df['image_url_processed'].copy()
 
 df_train=df[df["status"]=="train"]
 df_val=df[df["status"]=="val"]
+print("Train, Val Split has been done.")
+print("Train Dataset Shape",df_train.shape)
+print("Val Dataset Shape",df_val.shape)
 
 
 from io import BytesIO
@@ -108,6 +111,7 @@ class WatermarkDataset(torch.utils.data.Dataset):
 
 train_ds = WatermarkDataset(df_train, preprocess['train'])
 val_ds = WatermarkDataset(df_val, preprocess['val'])
+print("Preprocessing procedures Done")
 
 datasets = {
     'train': train_ds,
@@ -149,6 +153,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=80):
                 with torch.set_grad_enabled(phase == 'train'):
                     with torch.cuda.amp.autocast():
                         outputs = model(inputs)
+                        labels = labels.view(-1, 1)  # Reshape target tensor to match model output shape
                         loss = criterion(outputs, labels)
 
                     _, preds = torch.max(outputs, 1)
@@ -198,13 +203,14 @@ optimizer = optim.SGD(params=model_ft.parameters(), lr=0.001, weight_decay=0.000
 BATCH_SIZE = 64
 
 dataloaders_dict = {
-    x: torch.utils.data.DataLoader(datasets[x], batch_size=BATCH_SIZE, shuffle=True, num_workers=12) 
+    x: torch.utils.data.DataLoader(datasets[x], batch_size=BATCH_SIZE, shuffle=True, num_workers=4) 
     for x in ['train', 'val']
 }
 
 import warnings
 warnings.filterwarnings("ignore")
 
+print("Entering Training Process")
 model_ft, train_acc_history, val_acc_history = train_model(
     model_ft, dataloaders_dict, criterion, optimizer, num_epochs=5
 )
